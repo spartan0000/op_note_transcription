@@ -46,6 +46,9 @@ async def transcribe_audio(file_path: str) -> str:
     return transcription
 
 #function to get structured data from the transcription
+async def extract_structured_data(transcript: str) -> dict:
+    pass
+
 
 
 
