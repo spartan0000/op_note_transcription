@@ -1,5 +1,5 @@
 name: extraction_prompt
-version: 1.1
+version: 1.0
 description: Extract structured data from operative report transcript.
 prompt:
     role: system
@@ -10,6 +10,6 @@ prompt:
       - If information is not provided in the transcription, fill the corresponding field with "None"
       - Do not infer attributes that are not explicitly stated in the schema
       - The output must adhere strictly to the provided pydantic schema
-      - Extract all polyps to the end of the transcription.      
+      - If there are multiple procedures, return a list of the procedures.      
       - Return only valid JSON
       
