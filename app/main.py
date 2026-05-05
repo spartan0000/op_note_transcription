@@ -21,7 +21,7 @@ app.add_middleware(
 
 @app.get("/")
 async def root():
-    return FileResponse("static/index.html")
+    return FileResponse(BASE_DIR / "static" / "index.html")
 
 
 app.include_router(transcription_route.router)

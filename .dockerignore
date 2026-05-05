@@ -1,0 +1,51 @@
+.git
+.gitignore
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE/editor
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Local env / secrets
+.env
+.env.*
+secrets/
+*.pem
+*.key
+
+# Test / coverage
+.coverage
+htmlcov/
+.pytest_cache/
+tests/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Logs
+*.log
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+
+# Misc
+tmp/
+temp/
