@@ -29,3 +29,4 @@ whisper_client = AsyncAzureOpenAI(
     azure_endpoint = os.getenv("AZURE_WHISPER_ENDPOINT"),
     api_version = os.getenv("AZURE_WHISPER_API_VERSION")
 )
+
