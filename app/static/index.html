@@ -3,24 +3,42 @@
 <head>
     <title>Op Note Dictation</title>
     <style>
-        body { font-family: Arial; max-width: 600px; margin: 50px auto; padding: 20px; }
+        body { font-family: Arial; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center; }
         button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
         #recordBtn { background-color: #4CAF50; color: white; }
         #recordBtn.recording { background-color: #f44336; }
-        #result { margin-top: 20px; padding: 15px; border: 1px solid #ddd; display: none; }
+        #result { margin-top: 20px; padding: 15px; border: 1px solid #ddd; display: none; text-align: left; }
         #noteUrl { color: #0066cc; word-break: break-all; }
+        .divider { margin: 30px 0; display: flex; align-items: center; gap: 10px; }
+        .divider hr { flex: 1; border: none; border-top: 1px solid #ccc; }
+        .divider span { color: #888; font-size: 14px; white-space: nowrap; }
+        #fileSection { display: flex; align-items: center; justify-content: center; gap: 10px; }
+        #uploadBtn { background-color: #2196F3; color: white; }
+        #uploadBtn:disabled { background-color: #90caf9; cursor: default; }
+        #error { color: red; display: none; margin-top: 10px; }
     </style>
 </head>
 <body>
     <h1>Op Note Dictation</h1>
+
     <button id="recordBtn">Start Recording</button>
+
+    <div class="divider">
+        <hr><span>or upload a file</span><hr>
+    </div>
+
+    <div id="fileSection">
+        <input type="file" id="audioFile" accept="audio/*">
+        <button id="uploadBtn">Upload & Transcribe</button>
+    </div>
+
     <div id="result">
         <p>Your note is ready:</p>
         <p><strong>Open in browser:</strong></p>
         <p id="noteUrl"></p>
         <button onclick="copyToClipboard()">Copy Link</button>
     </div>
-    <div id="error" style="color: red; display: none;"></div>
+    <div id="error"></div>
 
     <script>
         let mediaRecorder;
@@ -30,72 +48,96 @@
         const resultDiv = document.getElementById('result');
         const noteUrl = document.getElementById('noteUrl');
         const errorDiv = document.getElementById('error');
+        const audioFile = document.getElementById('audioFile');
+        const uploadBtn = document.getElementById('uploadBtn');
 
         recordBtn.addEventListener('click', async () => {
             if (!mediaRecorder) {
-                // Start recording
                 try {
                     stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     mediaRecorder = new MediaRecorder(stream);
-                    
+
                     mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
                     mediaRecorder.onstop = sendAudio;
-                    
+
                     mediaRecorder.start();
                     recordBtn.textContent = 'Stop Recording';
                     recordBtn.classList.add('recording');
                     resultDiv.style.display = 'none';
                     errorDiv.style.display = 'none';
                 } catch (err) {
-                    errorDiv.textContent = 'Microphone access denied: ' + err.message;
-                    errorDiv.style.display = 'block';
+                    showError('Microphone access denied: ' + err.message);
                 }
             } else {
-                // Stop recording
                 mediaRecorder.stop();
-                recordBtn.textContent = 'Start Recording';
                 recordBtn.classList.remove('recording');
                 recordBtn.disabled = true;
                 recordBtn.textContent = 'Processing...';
-                
-                // Stop all tracks
                 stream.getTracks().forEach(track => track.stop());
             }
         });
 
-        async function sendAudio() {
-            const audioBlob = new Blob(chunks, { type: 'audio/wav' });
+        uploadBtn.addEventListener('click', async () => {
+            const file = audioFile.files[0];
+            if (!file) {
+                showError('Please select an audio file first.');
+                return;
+            }
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Processing...';
+            resultDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+
             const formData = new FormData();
-            formData.append('file', audioBlob, 'recording.wav');
+            formData.append('file', file, file.name);
 
             try {
-                const response = await fetch('/transcribe', {
-                    method: 'POST',
-                    body: formData
-                });
-
+                const response = await fetch('/transcribe', { method: 'POST', body: formData });
                 if (!response.ok) throw new Error('Upload failed');
-                
                 const data = await response.json();
-                const fullUrl = window.location.origin + data.url;
-                noteUrl.textContent = fullUrl;
-                resultDiv.style.display = 'block';
-                
+                showResult(data.url);
+            } catch (err) {
+                showError('Error: ' + err.message);
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Upload & Transcribe';
+            }
+        });
+
+        async function sendAudio() {
+            const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+            const formData = new FormData();
+            formData.append('file', audioBlob, 'recording.webm');
+
+            try {
+                const response = await fetch('/transcribe', { method: 'POST', body: formData });
+                if (!response.ok) throw new Error('Upload failed');
+                const data = await response.json();
+                showResult(data.url);
                 recordBtn.disabled = false;
+            } catch (err) {
+                showError('Error: ' + err.message);
+                recordBtn.disabled = false;
+            } finally {
                 chunks = [];
                 mediaRecorder = null;
-            } catch (err) {
-                errorDiv.textContent = 'Error: ' + err.message;
-                errorDiv.style.display = 'block';
-                recordBtn.disabled = false;
+                recordBtn.textContent = 'Start Recording';
             }
         }
 
+        function showResult(url) {
+            const fullUrl = window.location.origin + url;
+            noteUrl.textContent = fullUrl;
+            resultDiv.style.display = 'block';
+        }
+
+        function showError(msg) {
+            errorDiv.textContent = msg;
+            errorDiv.style.display = 'block';
+        }
+
         function copyToClipboard() {
-            const url = noteUrl.textContent;
-            navigator.clipboard.writeText(url).then(() => {
-                alert('Link copied!');
-            });
+            navigator.clipboard.writeText(noteUrl.textContent).then(() => alert('Link copied!'));
         }
     </script>
 </body>
