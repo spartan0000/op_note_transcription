@@ -1,4 +1,5 @@
 from fastapi import APIRouter, File, UploadFile, HTTPException
+from pydantic import BaseModel
 from app.services import functions
 
 import uuid
@@ -8,6 +9,10 @@ from datetime import datetime, timedelta
 note_cache = {}
 
 router = APIRouter(tags=["transcription"])
+
+
+class TextTranscript(BaseModel):
+    transcript: str
 
 @router.post("/transcribe")
 async def transcribe(file: UploadFile = File(...)):
@@ -25,6 +30,20 @@ async def transcribe(file: UploadFile = File(...)):
         'note_id': note_id,
         'url': f"/note/{note_id}"
     }
+
+@router.post("/transcribe-text")
+async def transcribe_text(body: TextTranscript):
+    note_id = str(uuid.uuid4())
+    note_cache[note_id] = {
+        'transcription': body.transcript,
+        'created_at': datetime.now(),
+        'expires_at': datetime.now() + timedelta(hours=1)
+    }
+    return {
+        'note_id': note_id,
+        'url': f"/note/{note_id}"
+    }
+
 
 @router.get("/note/{note_id}")
 async def get_note(note_id: str):
