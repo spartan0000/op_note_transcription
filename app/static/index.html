@@ -5,8 +5,16 @@
     <style>
         body { font-family: Arial; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center; }
         button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
-        #recordBtn { background-color: #4CAF50; color: white; }
-        #recordBtn.recording { background-color: #f44336; }
+        #dictateBtn { background-color: #4CAF50; color: white; }
+        #dictateBtn.recording { background-color: #f44336; }
+        #dictateBtn:disabled { background-color: #aaa; cursor: default; }
+        #submitBtn { background-color: #FF9800; color: white; margin-top: 10px; }
+        #submitBtn:disabled { background-color: #ffcc80; cursor: default; }
+        #transcript { width: 100%; min-height: 120px; margin-top: 15px; padding: 10px;
+            box-sizing: border-box; font-size: 15px; border: 1px solid #ccc;
+            border-radius: 4px; text-align: left; resize: vertical; }
+        #interimText { color: #999; font-style: italic; min-height: 22px; margin-top: 4px; text-align: left; }
+        #status { color: #666; font-size: 14px; margin-top: 8px; min-height: 20px; }
         #result { margin-top: 20px; padding: 15px; border: 1px solid #ddd; display: none; text-align: left; }
         #noteUrl { color: #0066cc; word-break: break-all; }
         .divider { margin: 30px 0; display: flex; align-items: center; gap: 10px; }
@@ -21,7 +29,12 @@
 <body>
     <h1>Op Note Dictation</h1>
 
-    <button id="recordBtn">Start Recording</button>
+    <button id="dictateBtn">Start Dictating</button>
+    <div id="status"></div>
+    <textarea id="transcript" placeholder="Transcript will appear here as you speak..."></textarea>
+    <div id="interimText"></div>
+    <br>
+    <button id="submitBtn" disabled>Submit Note</button>
 
     <div class="divider">
         <hr><span>or upload a file</span><hr>
@@ -41,48 +54,127 @@
     <div id="error"></div>
 
     <script>
-        let mediaRecorder;
-        let stream;
-        let chunks = [];
-        const recordBtn = document.getElementById('recordBtn');
+        const dictateBtn = document.getElementById('dictateBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const transcriptArea = document.getElementById('transcript');
+        const interimText = document.getElementById('interimText');
         const resultDiv = document.getElementById('result');
         const noteUrl = document.getElementById('noteUrl');
         const errorDiv = document.getElementById('error');
+        const statusDiv = document.getElementById('status');
         const audioFile = document.getElementById('audioFile');
         const uploadBtn = document.getElementById('uploadBtn');
 
-        recordBtn.addEventListener('click', async () => {
-            if (!mediaRecorder) {
-                try {
-                    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorder = new MediaRecorder(stream);
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            dictateBtn.disabled = true;
+            dictateBtn.textContent = 'Not supported in this browser';
+            showError('Chrome Speech Recognition is not available. Please use Chrome or Edge.');
+        }
 
-                    mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
-                    mediaRecorder.onstop = sendAudio;
+        let recognition;
+        let isListening = false;
+        let finalTranscript = '';
 
-                    mediaRecorder.start();
-                    recordBtn.textContent = 'Stop Recording';
-                    recordBtn.classList.add('recording');
-                    resultDiv.style.display = 'none';
-                    errorDiv.style.display = 'none';
-                } catch (err) {
-                    showError('Microphone access denied: ' + err.message);
+        function initRecognition() {
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = () => {
+                statusDiv.textContent = 'Listening...';
+                dictateBtn.textContent = 'Stop Dictating';
+                dictateBtn.classList.add('recording');
+                submitBtn.disabled = true;
+            };
+
+            recognition.onresult = (event) => {
+                let interim = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const text = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += text + ' ';
+                    } else {
+                        interim += text;
+                    }
                 }
+                transcriptArea.value = finalTranscript;
+                interimText.textContent = interim;
+            };
+
+            recognition.onerror = (event) => {
+                if (event.error !== 'no-speech') {
+                    showError('Speech recognition error: ' + event.error);
+                    stopListening();
+                }
+            };
+
+            // Chrome stops recognition after silence; restart if still dictating
+            recognition.onend = () => {
+                if (isListening) recognition.start();
+            };
+        }
+
+        function stopListening() {
+            isListening = false;
+            if (recognition) {
+                recognition.onend = null;
+                recognition.stop();
+            }
+            dictateBtn.textContent = 'Start Dictating';
+            dictateBtn.classList.remove('recording');
+            statusDiv.textContent = '';
+            interimText.textContent = '';
+            submitBtn.disabled = !transcriptArea.value.trim();
+        }
+
+        dictateBtn.addEventListener('click', () => {
+            if (!SpeechRecognition) return;
+            if (!isListening) {
+                isListening = true;
+                finalTranscript = transcriptArea.value;
+                resultDiv.style.display = 'none';
+                errorDiv.style.display = 'none';
+                initRecognition();
+                recognition.start();
             } else {
-                mediaRecorder.stop();
-                recordBtn.classList.remove('recording');
-                recordBtn.disabled = true;
-                recordBtn.textContent = 'Processing...';
-                stream.getTracks().forEach(track => track.stop());
+                stopListening();
+            }
+        });
+
+        transcriptArea.addEventListener('input', () => {
+            submitBtn.disabled = !transcriptArea.value.trim();
+        });
+
+        submitBtn.addEventListener('click', async () => {
+            const text = transcriptArea.value.trim();
+            if (!text) return;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processing...';
+            resultDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/transcribe-text', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ transcript: text })
+                });
+                if (!response.ok) throw new Error('Submission failed');
+                const data = await response.json();
+                showResult(data.url);
+            } catch (err) {
+                showError('Error: ' + err.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Note';
             }
         });
 
         uploadBtn.addEventListener('click', async () => {
             const file = audioFile.files[0];
-            if (!file) {
-                showError('Please select an audio file first.');
-                return;
-            }
+            if (!file) { showError('Please select an audio file first.'); return; }
             uploadBtn.disabled = true;
             uploadBtn.textContent = 'Processing...';
             resultDiv.style.display = 'none';
@@ -104,30 +196,8 @@
             }
         });
 
-        async function sendAudio() {
-            const audioBlob = new Blob(chunks, { type: 'audio/webm' });
-            const formData = new FormData();
-            formData.append('file', audioBlob, 'recording.webm');
-
-            try {
-                const response = await fetch('/transcribe', { method: 'POST', body: formData });
-                if (!response.ok) throw new Error('Upload failed');
-                const data = await response.json();
-                showResult(data.url);
-                recordBtn.disabled = false;
-            } catch (err) {
-                showError('Error: ' + err.message);
-                recordBtn.disabled = false;
-            } finally {
-                chunks = [];
-                mediaRecorder = null;
-                recordBtn.textContent = 'Start Recording';
-            }
-        }
-
         function showResult(url) {
-            const fullUrl = window.location.origin + url;
-            noteUrl.textContent = fullUrl;
+            noteUrl.textContent = window.location.origin + url;
             resultDiv.style.display = 'block';
         }
 
