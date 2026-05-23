@@ -56,4 +56,4 @@ async def get_note(note_id: str):
     if datetime.now() > note['expires_at']:
         del note_cache[note_id]
         raise HTTPException(status_code = 404, detail = "Note expired")
-    return note['transcription']
+    return note['structured_data']
