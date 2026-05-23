@@ -34,8 +34,10 @@ async def transcribe(file: UploadFile = File(...)):
 @router.post("/transcribe-text")
 async def transcribe_text(body: TextTranscript):
     note_id = str(uuid.uuid4())
+    output = await functions.extract_structured_data(body.transcript)
     note_cache[note_id] = {
         'transcription': body.transcript,
+        'structured_data': output,
         'created_at': datetime.now(),
         'expires_at': datetime.now() + timedelta(hours=1)
     }
