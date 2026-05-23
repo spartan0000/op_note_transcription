@@ -19,6 +19,8 @@ class Note(BaseModel):
             raise ValueError("Dates cannot be in the future")
         if v and v < date(2000, 1, 1):
             raise ValueError("Dates cannot be before January 1, 2000")
+        
+    
     procedures: List[Optional[str]] = Field(default = None, description="The name of the procedure")
     procedure_description: Optional[str] = Field(default = None, description="Description of the operative procedure")
     ebl: Optional[float] = Field(default = None, description="The estimated blood loss")
