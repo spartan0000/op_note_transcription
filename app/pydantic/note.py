@@ -4,7 +4,7 @@ from datetime import datetime, date
 
 
 class Note(BaseModel):
-    id: Optional[int] = Field(default = None, description = "Unique identifier for the note")
+    
     preop_diagnosis: Optional[str] = Field(default = None, description = "Preoperative diagnosis")
     postop_diagnosis: Optional[str] = Field(default = None, description = "Postoperative diagnosis")
     anesthesia: Optional[str] = Field(default = None, description="Type of anesthesia")
