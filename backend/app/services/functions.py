@@ -8,8 +8,8 @@ import asyncio
 import json
 import yaml
 
-from app.services.clients import chat_client, whisper_client, transcribe_client
-from app.pydantic.note import Note
+from backend.app.services.clients import chat_client, whisper_client, transcribe_client
+from backend.app.pydantic.note import Note
 
 from pathlib import Path
 

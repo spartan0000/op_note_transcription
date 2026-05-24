@@ -1,6 +1,6 @@
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from pydantic import BaseModel
-from app.services import functions
+from backend.app.services import functions
 
 import uuid
 
@@ -56,4 +56,4 @@ async def get_note(note_id: str):
     if datetime.now() > note['expires_at']:
         del note_cache[note_id]
         raise HTTPException(status_code = 404, detail = "Note expired")
-    return note['structured_data']
+    return note['structured_data'], note['transcription']

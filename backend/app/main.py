@@ -1,15 +1,20 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import transcription_route
+from backend.app.api import transcription_route
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pathlib import Path
+from dotenv import load_dotenv
+import os
 
 app = FastAPI()
 
 BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR.parent / ".env")
 
-app.mount("/static", StaticFiles(directory = str(BASE_DIR/"static")), name="static")
+print(f"DB: {os.getenv('DB_HOST')}")
+
+app.mount("/static", StaticFiles(directory = BASE_DIR/"static"), name="static")
 
 app.add_middleware(
     CORSMiddleware,
