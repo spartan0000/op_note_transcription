@@ -1,122 +1,214 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? ''
+
+const hasSpeechRecognition = !!(window.SpeechRecognition || window.webkitSpeechRecognition)
+
+export default function App() {
+  const [transcript, setTranscript] = useState('')
+  const [interim, setInterim] = useState('')
+  const [isListening, setIsListening] = useState(false)
+  const [status, setStatus] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [noteUrl, setNoteUrl] = useState('')
+  const [error, setError] = useState('')
+  const [copied, setCopied] = useState(false)
+
+  const recognitionRef = useRef(null)
+  const isListeningRef = useRef(false)
+  const finalTranscriptRef = useRef('')
+
+  const initRecognition = useCallback(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    const rec = new SpeechRecognition()
+    rec.continuous = true
+    rec.interimResults = true
+    rec.lang = 'en-US'
+
+    rec.onstart = () => {
+      setStatus('Listening...')
+    }
+
+    rec.onresult = (event) => {
+      let interimText = ''
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const text = event.results[i][0].transcript
+        if (event.results[i].isFinal) {
+          finalTranscriptRef.current += text + ' '
+        } else {
+          interimText += text
+        }
+      }
+      setTranscript(finalTranscriptRef.current)
+      setInterim(interimText)
+    }
+
+    rec.onerror = (event) => {
+      if (event.error !== 'no-speech') {
+        setError('Speech recognition error: ' + event.error)
+        stopListening()
+      }
+    }
+
+    // Chrome stops after silence — restart if still in listening mode
+    rec.onend = () => {
+      if (isListeningRef.current) rec.start()
+    }
+
+    return rec
+  }, [])
+
+  const stopListening = useCallback(() => {
+    isListeningRef.current = false
+    setIsListening(false)
+    if (recognitionRef.current) {
+      recognitionRef.current.onend = null
+      recognitionRef.current.stop()
+    }
+    setStatus('')
+    setInterim('')
+  }, [])
+
+  const toggleDictation = useCallback(() => {
+    if (!hasSpeechRecognition) return
+
+    if (!isListeningRef.current) {
+      isListeningRef.current = true
+      setIsListening(true)
+      finalTranscriptRef.current = transcript
+      setNoteUrl('')
+      setError('')
+      recognitionRef.current = initRecognition()
+      recognitionRef.current.start()
+    } else {
+      stopListening()
+    }
+  }, [transcript, initRecognition, stopListening])
+
+  const handleTranscriptChange = (e) => {
+    setTranscript(e.target.value)
+    finalTranscriptRef.current = e.target.value
+  }
+
+  const handleSubmit = async () => {
+    const text = transcript.trim()
+    if (!text) return
+    setIsSubmitting(true)
+    setNoteUrl('')
+    setError('')
+
+    try {
+      const res = await fetch(`${API_BASE}/transcribe-text`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transcript: text }),
+      })
+      if (!res.ok) throw new Error('Submission failed')
+      const data = await res.json()
+      setNoteUrl(API_BASE + data.url)
+    } catch (err) {
+      setError('Error: ' + err.message)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsUploading(true)
+    setNoteUrl('')
+    setError('')
+
+    const formData = new FormData()
+    formData.append('file', file, file.name)
+
+    try {
+      const res = await fetch(`${API_BASE}/transcribe`, { method: 'POST', body: formData })
+      if (!res.ok) throw new Error('Upload failed')
+      const data = await res.json()
+      setNoteUrl(API_BASE + data.url)
+    } catch (err) {
+      setError('Error: ' + err.message)
+    } finally {
+      setIsUploading(false)
+      e.target.value = ''
+    }
+  }
+
+  const copyLink = async () => {
+    await navigator.clipboard.writeText(noteUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const submitDisabled = !transcript.trim() || isListening || isSubmitting
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="container">
+      <h1>Op Note Dictation</h1>
 
-      <div className="ticks"></div>
+      {!hasSpeechRecognition && (
+        <p className="browser-warning">
+          Speech recognition is not available. Please use Chrome or Edge.
+        </p>
+      )}
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      <button
+        className={`btn dictate-btn ${isListening ? 'recording' : ''}`}
+        onClick={toggleDictation}
+        disabled={!hasSpeechRecognition}
+      >
+        {isListening ? 'Stop Dictating' : 'Start Dictating'}
+      </button>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      {status && <div className="status">{status}</div>}
+
+      <textarea
+        className="transcript"
+        placeholder="Transcript will appear here as you speak..."
+        value={transcript}
+        onChange={handleTranscriptChange}
+      />
+
+      {interim && <div className="interim">{interim}</div>}
+
+      <button
+        className="btn submit-btn"
+        onClick={handleSubmit}
+        disabled={submitDisabled}
+      >
+        {isSubmitting ? 'Processing...' : 'Submit Note'}
+      </button>
+
+      <div className="divider">
+        <hr /><span>or upload a file</span><hr />
+      </div>
+
+      <label className={`btn upload-btn ${isUploading ? 'disabled' : ''}`}>
+        {isUploading ? 'Processing...' : 'Upload & Transcribe'}
+        <input
+          type="file"
+          accept="audio/*"
+          onChange={handleUpload}
+          disabled={isUploading}
+          hidden
+        />
+      </label>
+
+      {error && <div className="error">{error}</div>}
+
+      {noteUrl && (
+        <div className="result">
+          <p>Your note is ready:</p>
+          <p className="note-url">{noteUrl}</p>
+          <button className="btn copy-btn" onClick={copyLink}>
+            {copied ? 'Copied!' : 'Copy Link'}
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
-
-export default App
