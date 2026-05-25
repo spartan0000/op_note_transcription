@@ -29,4 +29,4 @@ async def root():
     return FileResponse(BASE_DIR / "static" / "index.html")
 
 
-app.include_router(transcription_route.router)
+app.include_router(transcription_route.router, prefix="/api")

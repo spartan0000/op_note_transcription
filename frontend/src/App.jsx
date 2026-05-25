@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import './App.css'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? ''
+const API_BASE = '/api'
 
 const hasSpeechRecognition = !!(window.SpeechRecognition || window.webkitSpeechRecognition)
 
@@ -107,7 +107,7 @@ export default function App() {
       })
       if (!res.ok) throw new Error('Submission failed')
       const data = await res.json()
-      setNoteUrl(API_BASE + data.url)
+      setNoteUrl(data.url)
     } catch (err) {
       setError('Error: ' + err.message)
     } finally {
@@ -129,7 +129,7 @@ export default function App() {
       const res = await fetch(`${API_BASE}/transcribe`, { method: 'POST', body: formData })
       if (!res.ok) throw new Error('Upload failed')
       const data = await res.json()
-      setNoteUrl(API_BASE + data.url)
+      setNoteUrl(data.url)
     } catch (err) {
       setError('Error: ' + err.message)
     } finally {
