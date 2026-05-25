@@ -14,12 +14,15 @@ load_dotenv(BASE_DIR / "backend" / ".env")
 
 print(f"DB: {os.getenv('DB_HOST')}")
 
+app.include_router(transcription_route.router, prefix="/api")
+
 app.mount("/static", StaticFiles(directory = BASE_DIR/"backend"/"app"/"static"), name="static")
 
 frontend_dist = BASE_DIR / "frontend" / "dist"
 
+
 if frontend_dist.exists():
-    app.mount("/", StaticFiles(directory = frontend_dist, html = True), name="frontend")
+     app.mount("/", StaticFiles(directory = frontend_dist, html = True), name="frontend")
 
 
 app.add_middleware(
@@ -35,4 +38,3 @@ async def root():
     return FileResponse(BASE_DIR / "static" / "index.html")
 
 
-app.include_router(transcription_route.router, prefix="/api")
