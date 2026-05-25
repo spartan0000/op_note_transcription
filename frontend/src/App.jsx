@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import NotePage from './NotePage.jsx'
 import './App.css'
 
 const API_BASE = '/api'
 
 const hasSpeechRecognition = !!(window.SpeechRecognition || window.webkitSpeechRecognition)
 
-export default function App() {
+function HomePage() {
   const [transcript, setTranscript] = useState('')
   const [interim, setInterim] = useState('')
   const [isListening, setIsListening] = useState(false)
@@ -212,5 +214,16 @@ export default function App() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/note/:noteId" element={<NotePage />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
