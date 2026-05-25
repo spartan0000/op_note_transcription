@@ -15,7 +15,12 @@ load_dotenv(BASE_DIR / "backend" / ".env")
 print(f"DB: {os.getenv('DB_HOST')}")
 
 app.mount("/static", StaticFiles(directory = BASE_DIR/"backend"/"app"/"static"), name="static")
-#app.mount("/", StaticFiles(directory = BASE_DIR/ "frontend" / "dist", html = True), name="frontend")
+
+frontend_dist = BASE_DIR / "frontend" / "dist"
+
+if frontend_dist.exists():
+    app.mount("/", StaticFiles(directory = frontend_dist, html = True), name="frontend")
+
 
 app.add_middleware(
     CORSMiddleware,
