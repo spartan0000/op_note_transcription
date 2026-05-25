@@ -12,7 +12,7 @@ export default function App() {
   const [status, setStatus] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
-  const [noteUrl, setNoteUrl] = useState('')
+  const [noteId, setNoteId] = useState('')
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
 
@@ -78,7 +78,7 @@ export default function App() {
       isListeningRef.current = true
       setIsListening(true)
       finalTranscriptRef.current = transcript
-      setNoteUrl('')
+      setNoteId('')
       setError('')
       recognitionRef.current = initRecognition()
       recognitionRef.current.start()
@@ -96,7 +96,7 @@ export default function App() {
     const text = transcript.trim()
     if (!text) return
     setIsSubmitting(true)
-    setNoteUrl('')
+    setNoteId('')
     setError('')
 
     try {
@@ -107,7 +107,7 @@ export default function App() {
       })
       if (!res.ok) throw new Error('Submission failed')
       const data = await res.json()
-      setNoteUrl(data.url)
+      setNoteId(data.note_id)
     } catch (err) {
       setError('Error: ' + err.message)
     } finally {
@@ -119,7 +119,7 @@ export default function App() {
     const file = e.target.files?.[0]
     if (!file) return
     setIsUploading(true)
-    setNoteUrl('')
+    setNoteId('')
     setError('')
 
     const formData = new FormData()
@@ -129,7 +129,7 @@ export default function App() {
       const res = await fetch(`${API_BASE}/transcribe`, { method: 'POST', body: formData })
       if (!res.ok) throw new Error('Upload failed')
       const data = await res.json()
-      setNoteUrl(data.url)
+      setNoteId(data.note_id)
     } catch (err) {
       setError('Error: ' + err.message)
     } finally {
@@ -137,6 +137,8 @@ export default function App() {
       e.target.value = ''
     }
   }
+
+  const noteUrl = noteId ? `${window.location.origin}/note/${noteId}` : ''
 
   const copyLink = async () => {
     await navigator.clipboard.writeText(noteUrl)
@@ -203,7 +205,7 @@ export default function App() {
       {noteUrl && (
         <div className="result">
           <p>Your note is ready:</p>
-          <p className="note-url">{noteUrl}</p>
+          <a className="note-url" href={noteUrl} target="_blank" rel="noreferrer">{noteUrl}</a>
           <button className="btn copy-btn" onClick={copyLink}>
             {copied ? 'Copied!' : 'Copy Link'}
           </button>

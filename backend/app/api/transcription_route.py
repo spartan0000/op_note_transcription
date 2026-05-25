@@ -26,10 +26,7 @@ async def transcribe(file: UploadFile = File(...)):
         'expires_at': datetime.now() + timedelta(hours=1)
     }
 
-    return {
-        'note_id': note_id,
-        'url': f"/note/{note_id}"
-    }
+    return {'note_id': note_id}
 
 @router.post("/transcribe-text")
 async def transcribe_text(body: TextTranscript):
@@ -41,10 +38,7 @@ async def transcribe_text(body: TextTranscript):
         'created_at': datetime.now(),
         'expires_at': datetime.now() + timedelta(hours=1)
     }
-    return {
-        'note_id': note_id,
-        'url': f"/note/{note_id}"
-    }
+    return {'note_id': note_id}
 
 
 @router.get("/note/{note_id}")
@@ -56,4 +50,7 @@ async def get_note(note_id: str):
     if datetime.now() > note['expires_at']:
         del note_cache[note_id]
         raise HTTPException(status_code = 404, detail = "Note expired")
-    return note['structured_data'], note['transcription']
+    return {
+        'structured_data': note['structured_data'], 
+        'transcription': note['transcription']
+    }

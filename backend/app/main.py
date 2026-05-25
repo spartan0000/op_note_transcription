@@ -9,12 +9,13 @@ import os
 
 app = FastAPI()
 
-BASE_DIR = Path(__file__).resolve().parent
-load_dotenv(BASE_DIR.parent / ".env")
+BASE_DIR = Path(__file__).resolve().parents[2]
+load_dotenv(BASE_DIR / "backend" / ".env")
 
 print(f"DB: {os.getenv('DB_HOST')}")
 
-app.mount("/static", StaticFiles(directory = BASE_DIR/"static"), name="static")
+app.mount("/static", StaticFiles(directory = BASE_DIR/"backend"/"app"/"static"), name="static")
+#app.mount("/", StaticFiles(directory = BASE_DIR/ "frontend" / "dist", html = True), name="frontend")
 
 app.add_middleware(
     CORSMiddleware,
