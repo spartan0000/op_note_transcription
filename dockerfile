@@ -1,14 +1,32 @@
+# Frontend build stage
+
+FROM node:20 AS frontend-builder
+
+WORKDIR /frontend
+
+COPY frontend/package*.json ./
+
+RUN npm install
+
+COPY frontend/ ./
+
+RUN npm run build
+
+#Backend stage
+
 FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY backend/requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY backend/ ./backend
+
+COPY --from=frontend-builder /frontend/dist ./frontend/dist
 
 EXPOSE 8000
 
