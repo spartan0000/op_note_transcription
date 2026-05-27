@@ -2,6 +2,7 @@ import sqlalchemy
 
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
+from sqlalchemy.engine import URL
 
 from backend.app.database.models import Base
 
@@ -10,15 +11,29 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = (
-    f"postgresql+psycopg2://{os.getenv('DB_USER')}:",
-    f"{os.getenv('DB_PASS')}@",
-    f"{os.getenv('DB_HOST')}:5432/",
-    f"{os.getenv('DB_NAME')}"
+TEST_DATABASE_URL = URL.create(
+    drivername="postgresql+psycopg2",
+    username=os.getenv('DB_USER'),
+    password=os.getenv('DB_PASS'),
+    host=os.getenv('DB_HOST_TEST'),
+    port=5432,
+    database=os.getenv('DB_NAME_TEST'),
+)
+
+DATABASE_URL = URL.create(
+    drivername="postgresql+psycopg2",
+    username=os.getenv('DB_USER'),
+    password=os.getenv('DB_PASS'),
+    host=os.getenv('DB_HOST_PROD'),
+    port=5432,
+    database=os.getenv('DB_NAME'),
 )
 
 engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(bine=engine)
+SessionLocal = sessionmaker(bind=engine)
+
+test_engine = create_engine(TEST_DATABASE_URL)
+TestSessionLocal = sessionmaker(bind=test_engine)
 
 def init_db():
     Base.metadata.create_all(engine)
