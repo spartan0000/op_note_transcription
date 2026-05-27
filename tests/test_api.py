@@ -25,3 +25,15 @@ def test_extract_structured_data(client):
         data = response.json()
         assert "note_id" in data
         assert mock_extract.called
+
+def test_extraction_failure(client):
+    fake = {
+        "transcript": "This is a test transcript"
+    }
+
+    with patch("backend.app.services.functions.extract_structured_data", new_callable=AsyncMock) as mock_extract:
+        mock_extract.side_effect = Exception("Extraction failed")
+
+        response = client.post("/api/transcribe-text", json = fake)
+
+        assert response.status_code == 502
