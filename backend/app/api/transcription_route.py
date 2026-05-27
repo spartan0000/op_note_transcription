@@ -31,7 +31,10 @@ async def transcribe(file: UploadFile = File(...)):
 @router.post("/transcribe-text")
 async def transcribe_text(body: TextTranscript):
     note_id = str(uuid.uuid4())
-    output = await functions.extract_structured_data(body.transcript)
+    try:
+         output = await functions.extract_structured_data(body.transcript)
+    except Exception as e:
+        raise HTTPException(status_code = 502, detail = f"Extraction failed: {str(e)}")
     note_cache[note_id] = {
         'transcription': body.transcript,
         'structured_data': output,
