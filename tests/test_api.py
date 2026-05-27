@@ -24,4 +24,4 @@ def test_extract_structured_data(client):
         assert response.status_code == 200
         data = response.json()
         assert "note_id" in data
-
+        assert mock_extract.called
