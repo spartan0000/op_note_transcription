@@ -88,9 +88,9 @@ async def extract_structured_data(transcript: str) -> dict:
             text_format = Note
         )
 
-        if type(response.output_parsed) is str or response.output_parsed is None:
+        if isinstance(response.output_parsed, str) or response.output_parsed is None:
             return _empty_report()
-        print(response.text)
+        #print(response.text)
     except Exception as e:
         print(f'Error extracting structured data: {e}')
         return _empty_report()
