@@ -1,6 +1,10 @@
 import pytest
 from unittest.mock import AsyncMock, patch
 
+from types import SimpleNamespace
+
+from backend.app.services.functions import _empty_report, extract_structured_data
+
 
 ###tests endpoint including openai api calls
 @pytest.mark.integration
@@ -37,3 +41,4 @@ def test_extraction_failure(client):
         response = client.post("/api/transcribe-text", json = fake)
 
         assert response.status_code == 502
+
