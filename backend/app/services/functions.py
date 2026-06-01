@@ -10,6 +10,7 @@ import yaml
 
 from backend.app.services.clients import chat_client, whisper_client, transcribe_client
 from backend.app.pydantic.note import Note
+from backend.app.database.models import Report
 
 from pathlib import Path
 
@@ -104,19 +105,19 @@ async def cleanup():
 
 
 #function to map pydantic model to sqlalchemy model
-def map_note_to_db(note: Note):
+def map_note_to_db(note: Note) -> Report:
 
-    return {
-        'preop_diagnosis': note.preop_diagnosis,
-        'postop_diagnosis': note.postop_diagnosis,
-        'anesthesia': note.anesthesia,
-        'date_of_dictation': note.date_of_dictation,
-        'date_of_procedure': note.date_of_procedure,
-        'procedures': note.procedures,
-        'procedure_description': note.procedure_description,
-        'ebl': note.ebl,
-        'specimens': note.specimens
-    }
+    return Report(
+        preop_diagnosis = note.preop_diagnosis,
+        postop_diagnosis = note.postop_diagnosis,
+        anesthesia = note.anesthesia,
+        date_of_dictation = note.date_of_dictation,
+        date_of_procedure = note.date_of_procedure,
+        procedures = note.procedures,
+        procedure_description = note.procedure_description,
+        ebl = note.ebl,
+        specimens = note.specimens
+    )
 
 ###development and testing
 async def main():
