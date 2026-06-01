@@ -103,6 +103,21 @@ async def cleanup():
     await chat_client.close()
 
 
+#function to map pydantic model to sqlalchemy model
+def map_note_to_db(note: Note):
+
+    return {
+        'preop_diagnosis': note.preop_diagnosis,
+        'postop_diagnosis': note.postop_diagnosis,
+        'anesthesia': note.anesthesia,
+        'date_of_dictation': note.date_of_dictation,
+        'date_of_procedure': note.date_of_procedure,
+        'procedures': note.procedures,
+        'procedure_description': note.procedure_description,
+        'ebl': note.ebl,
+        'specimens': note.specimens
+    }
+
 ###development and testing
 async def main():
     data_path = DATA_PATH / "sample_op.mp3"
