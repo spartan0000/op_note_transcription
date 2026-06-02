@@ -27,7 +27,11 @@ def test_extract_structured_data(client):
         response = client.post("/api/transcribe-text", json = fake)
         assert response.status_code == 200
         data = response.json()
+
+        from backend.app.api.transcription_route import note_cache
         assert "note_id" in data
+        note_id= data['note_id']
+        assert note_cache[note_id]['transcription'] == "This is a test transcript"
         assert mock_extract.called
 
 def test_extraction_failure(client):
@@ -41,6 +45,7 @@ def test_extraction_failure(client):
         response = client.post("/api/transcribe-text", json = fake)
 
         assert response.status_code == 502
+
 
 def test_empty_transcript(client):
     
@@ -83,3 +88,4 @@ def test_note_cache_populated(client):
     assert 'structured_data' in note_data
     assert 'created_at' in note_data
     assert 'expires_at' in note_data
+
