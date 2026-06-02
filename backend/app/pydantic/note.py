@@ -29,10 +29,20 @@ class Note(BaseModel):
             self.date_of_dictation = None
             self.date_of_procedure = None
         return self
-
         
     procedures: List[Optional[str]] = Field(default = None, description="The name of the procedure")
     procedure_description: Optional[str] = Field(default = None, description="Description of the operative procedure")
     ebl: Optional[float] = Field(default = None, description="The estimated blood loss")
     specimens: Optional[str] = Field(default = None, description="Any specimens collected during the procedure")
 
+class ReportCreate(BaseModel):
+    preop_diagnosis: Optional[str] = Field(default = None)
+    postop_diagnosis: Optional[str] = Field(default = None)
+    anesthesia: Optional[str] = Field(default = None)
+    date_of_dictation: Optional[date] = Field(default=None)
+    date_of_procedure: Optional[date] = Field(default=None)
+    procedures: List[Optional[str]] = Field(default=None)
+    procedure_description: Optional[str] = Field(default=None)
+    ebl: Optional[float] = Field(default=None)
+    specimens: Optional[str] = Field(default=None)
+    user_id: int

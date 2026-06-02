@@ -89,3 +89,7 @@ def test_note_cache_populated(client):
     assert 'created_at' in note_data
     assert 'expires_at' in note_data
 
+def test_note_does_not_exist(client):
+    response = client.get("/api/note/nonexistent_id")
+
+    assert response.status_code == 404
