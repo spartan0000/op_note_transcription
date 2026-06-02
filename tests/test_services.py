@@ -29,3 +29,17 @@ async def test_extraction_exception():
         result = await extract_structured_data("this is a test")
 
     assert result == _empty_report()
+
+
+@pytest.mark.asyncio
+async def test_empty_LLM_return():
+    fake = {
+        'transcript': "test"
+    }
+
+    with patch("backend.app.services.functions.chat_client.responses.parse", new_callable=AsyncMock) as mock_extract:
+        mock_extract.return_value = None
+
+        result = await extract_structured_data(fake['transcript'])
+    assert result == _empty_report()
+
