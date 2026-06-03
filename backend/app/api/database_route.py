@@ -17,7 +17,6 @@ from backend.app.pydantic.note import ReportCreate, Note
 router = APIRouter(tags=['database'])
 
 @router.post("/reports")
-
 def create_report(payload: ReportCreate, db: Session = Depends(get_db)):
     report = Report(**payload.model_dump())
     db.add(report)

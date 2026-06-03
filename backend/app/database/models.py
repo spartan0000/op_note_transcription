@@ -1,8 +1,9 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Date, Float, List
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Date, Float
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import Mapped, mapped_column
 from datetime import datetime
+from typing import List, Optional
 
 from sqlalchemy.orm import DeclarativeBase
 
@@ -26,8 +27,8 @@ class Report(Base):
     preop_diagnosis: Mapped[str] = mapped_column(String, nullable=True)
     postop_diagnosis: Mapped[str] = mapped_column(String, nullable=True)
     anesthesia: Mapped[str] = mapped_column(String, nullable=True)
-    date_of_dictation: Mapped[DateTime] = mapped_column(datetime, nullable=True)
-    date_of_procedure: Mapped[DateTime] = mapped_column(datetime, nullable=True)
+    date_of_dictation: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    date_of_procedure: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     procedures: Mapped[list[str]] = mapped_column(JSONB, nullable=True)
     procedure_description: Mapped[str] = mapped_column(String, nullable=True)
     ebl: Mapped[float] = mapped_column(Float, nullable=True)

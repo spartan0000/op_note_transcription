@@ -7,10 +7,10 @@ from backend.app.database.models import Base
 
 from backend.app.database.models import Report
 
-def test_create_report(client, db_session):
+def test_create_report(client, db_session, test_user):
     payload = {
         'preop_diagnosis': 'test diagnosis',
-        'user_id': 1
+        'user_id': test_user.id
     }
 
     response = client.post("/api/reports", json = payload)
@@ -27,4 +27,4 @@ def test_create_report(client, db_session):
 
     assert report is not None
     assert report.preop_diagnosis == 'test diagnosis'
-    assert report.user_id == 1
+    assert report.user_id == test_user.id
