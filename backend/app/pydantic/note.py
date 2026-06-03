@@ -35,6 +35,8 @@ class Note(BaseModel):
     ebl: Optional[float] = Field(default = None, description="The estimated blood loss")
     specimens: Optional[str] = Field(default = None, description="Any specimens collected during the procedure")
 
+
+#the user_id will eventually be removed and replaced with authentication 
 class ReportCreate(BaseModel):
     preop_diagnosis: Optional[str] = Field(default = None)
     postop_diagnosis: Optional[str] = Field(default = None)
