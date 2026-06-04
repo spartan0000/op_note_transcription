@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime, timedelta
 
 from backend.app.database.connection import get_db
-from backend.app.database.models import Report
+from backend.app.database.models import Report, User
 from backend.app.pydantic.note import ReportCreate, Note
 
 
@@ -18,6 +18,9 @@ router = APIRouter(tags=['database'])
 
 @router.post("/reports")
 def create_report(payload: ReportCreate, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == payload.user_id).first()
+    if user is None:
+        raise HTTPException(status_code = 404, detail = "User not found")
     report = Report(**payload.model_dump())
     db.add(report)
 

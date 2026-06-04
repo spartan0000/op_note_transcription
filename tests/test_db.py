@@ -28,3 +28,18 @@ def test_create_report(client, db_session, test_user):
     assert report is not None
     assert report.preop_diagnosis == 'test diagnosis'
     assert report.user_id == test_user.id
+
+def test_invalid_user_id(client, db_session):
+    payload = {
+        'preop_diagnosis': 'test',
+        'user_id': 9999
+    }
+
+    response = client.post("/api/reports", json = payload)
+
+    assert response.status_code == 404
+
+    data = response.json()
+
+    assert data['detail'] == "User not found"
+
