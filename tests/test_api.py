@@ -93,3 +93,17 @@ def test_note_does_not_exist(client):
     response = client.get("/api/note/nonexistent_id")
 
     assert response.status_code == 404
+
+def test_invalid_user_id(client, db_session):
+    payload = {
+        'preop_diagnosis': 'test',
+        'user_id': 9999
+    }
+
+    response = client.post("/api/reports", json = payload)
+
+    assert response.status_code == 404
+
+    data = response.json()
+
+    assert data['detail'] == "User not found"
