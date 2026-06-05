@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from backend.app.services import functions
 
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 
 
 import uuid
@@ -18,7 +19,7 @@ router = APIRouter(tags=['database'])
 
 @router.post("/reports")
 def create_report(payload: ReportCreate, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == payload.user_id).first()
+    user = db.get(User, payload.user_id)
     if user is None:
         raise HTTPException(status_code = 404, detail = "User not found")
     report = Report(**payload.model_dump())

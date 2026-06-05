@@ -17,7 +17,7 @@ class User(Base):
     username: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String)
     email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
-    reports: Mapped[List["Report"]] = relationship("Report", back_populates="user")
+    reports: Mapped[List["Report"]] = relationship("Report", back_populates="user", cascade="all, delete-orphan")
 
 
 class Report(Base):
@@ -34,5 +34,5 @@ class Report(Base):
     ebl: Mapped[float] = mapped_column(Float, nullable=True)
     specimens: Mapped[str] = mapped_column(String, nullable=True)
 
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'), nullable=False, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id', ondelete="CASCADE"), nullable=False, index=True)
     user: Mapped["User"] = relationship("User", back_populates="reports")
