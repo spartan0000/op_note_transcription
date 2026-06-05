@@ -72,9 +72,9 @@ def test_note_cache_populated(client):
     }
     with patch("backend.app.services.functions.extract_structured_data", new_callable=AsyncMock) as mock_extract:
         mock_extract.return_value = {"key": "value"}
-    response = client.post("/api/transcribe-text", json = fake)
+        response = client.post("/api/transcribe-text", json = fake)
 
-    assert response.status_code == 200
+        assert response.status_code == 200
     data = response.json()
     note_id = data['note_id']
 
@@ -107,3 +107,12 @@ def test_invalid_user_id(client, db_session):
     data = response.json()
 
     assert data['detail'] == "User not found"
+
+def test_missing_required_user_id(client):
+    payload = {
+        'preop_diagnosis': 'test'
+    }
+
+    response = client.post("/api/reports", json = payload)
+
+    assert response.status_code == 422

@@ -29,4 +29,23 @@ def test_create_report(client, db_session, test_user):
     assert report.preop_diagnosis == 'test diagnosis'
     assert report.user_id == test_user.id
 
+def test_multiple_reports(client, db_session, test_user):
+    payload1 = {
+        'preop_diagnosis': 'diagnosis 1',
+        'user_id': test_user.id
+    }
 
+    payload2 = {
+        'preop_diagnosis': 'diagnosis 2',
+        'user_id': test_user.id
+    }
+
+    response1 = client.post("/api/reports", json = payload1)
+    response2 = client.post("/api/reports", json = payload2)
+
+    assert response1.status_code == 200
+    assert response2.status_code == 200
+
+    user_reports = db_session.query(Report).filter_by(user_id = test_user.id).all()
+
+    assert len(user_reports) == 2
