@@ -19,7 +19,7 @@ from backend.app.database.models import User
 load_dotenv()
 
 class LoginRequest(BaseModel):
-    email: str
+    username_or_email: str
     password: str
 
 pwd_hasher = PasswordHasher()
@@ -27,7 +27,9 @@ SECRET_KEY = os.getenv("JWT_KEY")
 
 @app.post("/api/login")
 def login(request: LoginRequest, db: Session = Depends(get_db)):
-    stmt = select(User).where(User.email == request.email)
+    stmt = select(User).where(
+        (User.email == request.username_or_email) | (User.username == request.username_or_email)
+    )
 
     user = db.execute(stmt).scalar_one_or_none()
 
