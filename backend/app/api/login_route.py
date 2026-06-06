@@ -22,6 +22,11 @@ class LoginRequest(BaseModel):
     username_or_email: str
     password: str
 
+class RegisterRequest(BaseModel):
+    username: str
+    email: str
+    password: str
+
 pwd_hasher = PasswordHasher()
 SECRET_KEY = os.getenv("JWT_KEY")
 
@@ -50,3 +55,34 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
 
     return {"access_token": token, "token_type": "bearer"}
+
+@app.post("/api/register")
+def register(request: RegisterRequest, db: Session = Depends(get_db)):
+    stmt = select(User).where(User.email == request.email)
+    existing_email = db.execute(stmt).scalar_one_or_none()
+
+    if existing_email:
+        raise HTTPException(status_code=400, detail = "Email already in use")
+    stmt = select(User).where(User.username == request.username)
+    existing_username = db.execute(stmt).scalar_one_or_none()
+
+    if existing_username:
+        raise HTTPException(status_code=400, detail = "Username already in use")
+    
+    hashed_password = pwd_hasher.hash(request.password)
+
+    new_user = User(
+        username = request.username,
+        email = request.email,
+        hashed_password = hashed_password
+    )
+
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return {
+        "user_id": new_user.id,
+        "username": new_user.username,
+        "email": new_user.email
+    }
