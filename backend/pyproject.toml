@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "argon2-cffi>=25.1.0",
     "fastapi[standard]>=0.136.1",
     "openai>=2.33.0",
     "psycopg2-binary>=2.9.12",

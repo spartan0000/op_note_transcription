@@ -65,3 +65,5 @@ def test_cascade_delete(client, db_session, test_user):
     report = user.reports[0] if user and user.reports else None
 
     assert report is None
+
+    
