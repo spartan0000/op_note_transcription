@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 from datetime import datetime, timedelta
 
-from pwdlib import PasswordHasher
+from pwdlib import PasswordHash
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -13,7 +13,7 @@ import os
 import jwt
 
 from backend.app.main import app
-from backend.app.database import get_db
+from backend.app.database.connection import get_db
 from backend.app.database.models import User
 
 load_dotenv()
@@ -27,7 +27,8 @@ class RegisterRequest(BaseModel):
     email: str
     password: str
 
-pwd_hasher = PasswordHasher()
+pwd_hasher = PasswordHash.recommended()
+
 SECRET_KEY = os.getenv("JWT_KEY")
 
 @app.post("/api/login")
