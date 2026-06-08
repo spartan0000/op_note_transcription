@@ -33,3 +33,20 @@ def test_user_registration(client, db_session):
     assert user.email == registration.email
     assert user.hashed_password != registration.password
     assert pwd_hasher.verify(registration.password, user.hashed_password)
+
+def test_duplicate_email_registration(client, db_session):
+    registration = RegisterRequest(
+        username = 'santa',
+        email = 'santa@northpole.co',
+        password = 'abcd1234'
+    )
+
+    client.post("/api/register", json = registration.model_dump())
+
+    response = client.post("/api/register", json = registration.model_dump())
+
+    assert response.status_code == 400
+
+    data = response.json()
+
+    assert data['detail'] == "Email already in use"
