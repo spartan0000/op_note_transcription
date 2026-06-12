@@ -36,7 +36,7 @@ def test_user_registration(client, db_session):
 
 def test_duplicate_email_registration(client, db_session):
     registration = RegisterRequest(
-        username = 'santa',
+        username = 'santaclause',
         email = 'santa@northpole.co',
         password = 'abcd1234'
     )
@@ -45,8 +45,30 @@ def test_duplicate_email_registration(client, db_session):
 
     response = client.post("/api/register", json = registration.model_dump())
 
-    assert response.status_code == 400
+    assert response.status_code == 409
 
     data = response.json()
 
     assert data['detail'] == "Email already in use"
+
+def test_duplicate_username_registration(client, db_session):
+    registration1 = RegisterRequest(
+        username = 'santa',
+        email = 'santa@northpole.co',
+        password = 'abcd1234'
+    )
+
+    registration2 = RegisterRequest(
+        username = 'santa',
+        email = 'santa2@northpole.co',
+        password = 'abcd1234'
+    )
+
+    client.post("/api/register", json = registration1.model_dump())
+
+    response = client.post("/api/register", json = registration2.model_dump())
+
+    assert response.status_code == 409
+    data = response.json()
+
+    assert data['detail'] == "Username alread in use"

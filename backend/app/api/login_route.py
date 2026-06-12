@@ -63,12 +63,12 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
     existing_email = db.execute(stmt).scalar_one_or_none()
 
     if existing_email:
-        raise HTTPException(status_code=400, detail = "Email already in use")
+        raise HTTPException(status_code=409, detail = "Email already in use")
     stmt = select(User).where(User.username == request.username)
     existing_username = db.execute(stmt).scalar_one_or_none()
 
     if existing_username:
-        raise HTTPException(status_code=400, detail = "Username already in use")
+        raise HTTPException(status_code=409, detail = "Username already in use")
     
     hashed_password = pwd_hasher.hash(request.password)
 
