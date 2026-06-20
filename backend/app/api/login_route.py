@@ -4,6 +4,7 @@ from pydantic import BaseModel, EmailStr
 from datetime import datetime, timedelta
 
 from pwdlib import PasswordHash
+from pwdlib.exceptions import VerificationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -45,7 +46,7 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     
     try:
         pwd_hasher.verify(request.password, user.hashed_password)
-    except:
+    except Exception as e:
         raise HTTPException(status_code=401, detail = "Invalid email or password")
     
     payload = {
@@ -59,18 +60,18 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
 
 @app.post("/api/register")
 def register(request: RegisterRequest, db: Session = Depends(get_db)):
-    stmt = select(User).where(User.email == request.email)
-    existing_email = db.execute(stmt).scalar_one_or_none()
+    stmt = select(User).where((User.email == request.email) | (User.username == request.username))
+    existing = db.execute(stmt).scalar_one_or_none()
 
     
 
-    if existing_email:
-        raise HTTPException(status_code=409, detail = "Email already in use")
-    stmt = select(User).where(User.username == request.username)
-    existing_username = db.execute(stmt).scalar_one_or_none()
+    if existing:
+        if existing.email:
+            raise HTTPException(status_code=409, detail = "Email already in use")
+    
 
-    if existing_username:
-        raise HTTPException(status_code=409, detail = "Username already in use")
+        if existing.username:
+            raise HTTPException(status_code=409, detail = "Username already in use")
     
     hashed_password = pwd_hasher.hash(request.password)
 
