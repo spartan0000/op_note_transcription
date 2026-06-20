@@ -72,3 +72,15 @@ def test_duplicate_username_registration(client, db_session):
     data = response.json()
 
     assert data['detail'] == "Username already in use"
+
+def test_missing_registration_data(client):
+
+    response = client.post("/api/register", json = {})
+
+    assert response.status_code == 422
+
+def test_invalid_email_registration(client):
+    
+    response = client.post("/api/register", json = {'username': 'santa', 'email': 'not-email', 'password': 'pass'})
+
+    assert response.status_code == 422
