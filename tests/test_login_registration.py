@@ -71,4 +71,4 @@ def test_duplicate_username_registration(client, db_session):
     assert response.status_code == 409
     data = response.json()
 
-    assert data['detail'] == "Username alread in use"
+    assert data['detail'] == "Username already in use"
