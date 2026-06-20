@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 from datetime import datetime, timedelta
 
@@ -24,7 +24,7 @@ class LoginRequest(BaseModel):
 
 class RegisterRequest(BaseModel):
     username: str
-    email: str
+    email: EmailStr
     password: str
 
 pwd_hasher = PasswordHash.recommended()
@@ -61,6 +61,8 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
 def register(request: RegisterRequest, db: Session = Depends(get_db)):
     stmt = select(User).where(User.email == request.email)
     existing_email = db.execute(stmt).scalar_one_or_none()
+
+    
 
     if existing_email:
         raise HTTPException(status_code=409, detail = "Email already in use")
