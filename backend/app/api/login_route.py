@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 from datetime import datetime, timedelta
 
@@ -24,7 +24,7 @@ class LoginRequest(BaseModel):
 
 class RegisterRequest(BaseModel):
     username: str
-    email: str
+    email: EmailStr
     password: str
 
 pwd_hasher = PasswordHash.recommended()
