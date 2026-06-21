@@ -1,13 +1,34 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { useState, useRef, useCallback } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import NotePage from './NotePage.jsx'
+import LoginPage from './LoginPage.jsx'
+import RegisterPage from './RegisterPage.jsx'
 import './App.css'
 
 const API_BASE = '/api'
 
 const hasSpeechRecognition = !!(window.SpeechRecognition || window.webkitSpeechRecognition)
 
+function isTokenValid(token) {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return payload.exp * 1000 > Date.now()
+  } catch {
+    return false
+  }
+}
+
+function ProtectedRoute({ children }) {
+  const token = localStorage.getItem('token')
+  if (!token || !isTokenValid(token)) {
+    localStorage.removeItem('token')
+    return <Navigate to="/login" replace />
+  }
+  return children
+}
+
 function HomePage() {
+  const navigate = useNavigate()
   const [transcript, setTranscript] = useState('')
   const [interim, setInterim] = useState('')
   const [isListening, setIsListening] = useState(false)
@@ -140,6 +161,11 @@ function HomePage() {
     }
   }
 
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    navigate('/login')
+  }
+
   const noteUrl = noteId ? `${window.location.origin}/note/${noteId}` : ''
 
   const copyLink = async () => {
@@ -152,7 +178,10 @@ function HomePage() {
 
   return (
     <div className="container">
-      <h1>Op Note Dictation</h1>
+      <div className="page-header">
+        <h1>Op Note Dictation</h1>
+        <button className="btn logout-btn" onClick={handleLogout}>Log Out</button>
+      </div>
 
       {!hasSpeechRecognition && (
         <p className="browser-warning">
@@ -221,8 +250,10 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/note/:noteId" element={<NotePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+        <Route path="/note/:noteId" element={<ProtectedRoute><NotePage /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   )
